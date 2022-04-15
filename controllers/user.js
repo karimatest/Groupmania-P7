@@ -2,30 +2,52 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
+console.log(User);
 exports.signup = (req, res, next) => {
-    //Hashage du mot de passe avant de l'envoyer dans la base de données
+let nom = req.body.nom;
+let prénom = req.body.prénom;
+let email = req.body.email;
+let password = req.body.password;
+if (email == null || nom == null || prénom == null || password || null){
+  return res.status(400).json({'error': 'fichier manquants'});
+}
+  User.findOne({where: {email: email}})
+  .then(function(user){
+    console.log(user)
+    if(!user){
       bcrypt.hash(req.body.password, 10)
       .then(hash => {
-         //Création du nouvel utilisateur
-        const user = new User({
-          lastname: req.body.lastname,
-          firstname: req.body.firstname,
+        User.create({
           email: req.body.email,
-          password: hash
+          password: hash,
+          nom: req.body.nom,
+          prénom: req.body.prénom,
+          admin: 0,
+        })
+        .then(function(){
+          return res.status(201).json({'Message': 'Compte créer'});
+        })
+        .catch(function(error){
+          return res.status(500).json({'error': 'Utilisateur non trouvé'});
         });
-         //Enregistrement de l'utilisateur dans la base de données
-        user.save()
-          .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-          .catch(error => res.status(400).json({ error }));
-      })
-      .catch(error => res.status(500).json({ error }));
-  };
+      });
+    }
+    else{
+      return res.status(409).json({ error: "Utilisateur existant" }); 
+    }
+  })
+
+ .catch(function(err){
+   return res.status(500).json({err});
+ });
+};
 
   // fonction login pour connecter les users existants
 exports.login = (req, res, next) => {
   //Chercher l'utilisateur dans la base de données
+  console.log(req.body.email);
     User.findOne({ where: { email: req.body.email } })
+    
     .then(user => {
       //Utilisateur non trouvé 
       if (!user) {

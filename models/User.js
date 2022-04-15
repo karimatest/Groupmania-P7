@@ -1,11 +1,12 @@
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes, Model, Sequelize } = require('sequelize');
+const sequelize = new Sequelize('mysql://root:@localhost:3306/groupomania');
 
-module.exports = (sequelize, Sequelize) => sequelize.define("user", {
-  firstName: {
+module.exports = sequelize.define("user", {
+  nom: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  lastName: {
+  prénom: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -24,6 +25,7 @@ module.exports = (sequelize, Sequelize) => sequelize.define("user", {
 
 }, {
   sequelize, 
-  modelName: 'user' 
-  
+  tableName: 'user',
+  timestamps: false
+ 
 });
