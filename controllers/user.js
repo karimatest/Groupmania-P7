@@ -3,43 +3,33 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 console.log(User);
-exports.signup = (req, res, next) => {
-let nom = req.body.nom;
-let prénom = req.body.prénom;
-let email = req.body.email;
-let password = req.body.password;
-if (email == null || nom == null || prénom == null || password || null){
-  return res.status(400).json({'error': 'fichier manquants'});
-}
-  User.findOne({where: {email: email}})
-  .then(function(user){
-    console.log(user)
-    if(!user){
-      bcrypt.hash(req.body.password, 10)
-      .then(hash => {
-        User.create({
-          email: req.body.email,
-          password: hash,
-          nom: req.body.nom,
-          prénom: req.body.prénom,
-          admin: 0,
-        })
-        .then(function(){
-          return res.status(201).json({'Message': 'Compte créer'});
-        })
-        .catch(function(error){
-          return res.status(500).json({'error': 'Utilisateur non trouvé'});
-        });
-      });
-    }
-    else{
-      return res.status(409).json({ error: "Utilisateur existant" }); 
-    }
-  })
 
- .catch(function(err){
-   return res.status(500).json({err});
- });
+exports.signup = (req, res) => {
+  console.log(req.body);
+
+ bcrypt.hash(req.body.password, 10)
+    .then(hash => {
+        // Création de l'objet utilisateur
+        const newUser = {
+           nom: req.body.nom,
+            prénom: req.body.prénom,
+            email: req.body.email,
+            password: hash,
+            admin: 0
+ }         
+    console.log(newUser);
+    console.log(req.body.prénom);
+        // Création de l'utilisateur
+        User.create(newUser)
+            .then(() => res.status(200).json({ message: 'Utilisateur créé' }))
+            .catch((error) =>{
+              console.log(error)
+             return res.status(400).json({ message: 'Utilisateur déjà existant' });
+            });
+    })
+    .catch(error => res.status(500).json({ error }));
+
+
 };
 
   // fonction login pour connecter les users existants
@@ -72,7 +62,11 @@ exports.login = (req, res, next) => {
               )
           });
         })
-        .catch(error => res.status(500).json({ error }));
+        .catch(error =>{console.log(error)
+          return res.status(500).json({ error });
+        });
     })
-    .catch(error => res.status(500).json({ error }));
+    .catch(error =>{console.log(error) 
+       return res.status(500).json({ error });
+    });
 };

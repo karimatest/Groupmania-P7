@@ -4,19 +4,52 @@ const Publications = require('../models/Publications')
 // modifier et supprimer un fichier
 const fs = require('fs');
 
-//Créer une sauce
-exports.createPublications = (req, res, next) => {
-    if(!req.body.Publications){
-   return res.status(400).json({message:"parametre manquant"})
-    }
-    
-    const Publications = new Publications({
-      // on récupère toutes les infos du body grâce à cette fonction ...spread
-      ...publicationsObject,
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    });
-    publicationsObject.save() //sauvegarder dans la base de donnée
-      .then(() => res.status(201).json({ message: 'Publications enregistré !'}))
+//Créer une publications
+exports.createPublications = (req, res) => {
+    let publicationImage;
+    // Si l'utilisateur publie une image
+    if(req.file) {
+        publicationImage = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    };
+    // Création de l'objet publication
+    const newPublication = {
+        titre: req.body.titre,
+        content: req.body.content,
+        //imageUrl: publicationImage,
+        userId: req.body.userId
+    };
+    // Création de la publications
+    Publications.create(newPublication)
+        .then(publication => res.status(201).json(publication))
+        .catch(error => res.status(500).json({ error }));
+};
+  
+  // Modifie une publications
+exports.modifyPublications = (req, res, next) => {
+    const publicationsObject = req.file ?
+      {
+        ...JSON.parse(req.body.Publications),
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+      } : { ...req.body };
+    Publications.updateOne({ _id: req.params.id }, { ...publicationsObject, _id: req.params.id })
+      .then(() => res.status(200).json({ message: 'Publications modifié !'}))
       .catch(error => res.status(400).json({ error }));
   };
   
+//Afficher une publication
+    exports.getOnePublication = (req, res, next) => {
+        Publications.findOne({
+          _id: req.params.id
+        }).then(
+          (publication) => {
+            res.status(200).json(publication);
+          }
+        ).catch(
+          (error) => {
+            res.status(404).json({
+              error: error
+            });
+          }
+        );
+      };
+
